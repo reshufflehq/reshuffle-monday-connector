@@ -1,7 +1,7 @@
 {
-  "name": "reshuffle-connectorname-connector",
+  "name": "reshuffle-monday-connector",
   "version": "0.0.1",
-  "description": "A Reshuffle _CONNECTOR_NAME_ connector",
+  "description": "A Reshuffle Monday connector",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/reshufflehq/reshuffle-_CONNECTOR_NAME_-connector.git"
+    "url": "git+https://github.com/reshufflehq/reshuffle-monday-connector.git"
   },
   "keywords": [
     "Reshuffle",
@@ -23,11 +23,13 @@
   "author": "Reshuffle",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/reshufflehq/reshuffle-_CONNECTOR_NAME_-connector/issues"
+    "url": "https://github.com/reshufflehq/reshuffle-monday-connector/issues"
   },
-  "homepage": "https://github.com/reshufflehq/reshuffle-_CONNECTOR_NAME_-connector#readme",
+  "homepage": "https://github.com/reshufflehq/reshuffle-monday-connector#readme",
   "dependencies": {
-    "reshuffle-base-connector": "^0.0.10"
+    "monday-sdk-js": "^0.1.1",
+    "@types/monday-sdk-js": "^0.1.0",
+    "reshuffle-base-connector": "^0.0.11"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^3.10.1",
