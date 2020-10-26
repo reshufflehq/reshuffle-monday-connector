@@ -119,12 +119,10 @@ export default class MondayConnector extends BaseHttpConnector<
   MondayConnectorEventOptions
 > {
   _sdk: MondaySdk
-  webhookIds: Record<string, string>[]
 
   constructor(app: Reshuffle, options: MondayConnectorConfigOptions, id?: string) {
     super(app, options, id)
     this._sdk = mondaySdk({ token: options.token })
-    this.webhookIds = []
   }
 
   async _api(...params: Parameters<MondaySdk['api']>): Promise<MondayApiReponse['data']> {
