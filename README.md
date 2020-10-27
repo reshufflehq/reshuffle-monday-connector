@@ -51,6 +51,7 @@ interface MondayConnectorEventOptions {
 Query a board or a list of boards
 
 ```typescript
+// To get the board_id, visit your board in the browser and copy the id from the last part of the URL e.g. 123456789 from https://my-company.monday.com/boards/123456789
 const board = await connector.getBoard(BOARD_ID)
 ```
 
