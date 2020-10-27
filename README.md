@@ -1,52 +1,123 @@
-## BEGIN - TO DELETE TILL END
+# reshuffle-monday-connector
 
-THIS IS A TEMPLATE REPO FOR NEW RESHUFFLE CONNECTORS
-1. Create a new connector repo from this template using this link https://github.com/reshufflehq/reshuffle-template-connector/generate
-2. Clone the repo locally
-3. Rename all occurrences of _CONNECTOR_NAME_
-4. `npm install`
-5. `npm run build:watch`
-6. Implement your events/actions in `src/index.ts`
-7. `npm run lint`
-8. Push your code
-9. Go to https://app.circleci.com/projects/project-dashboard/github/reshufflehq/
-    a. You should see your new connector repo
-    b. click on `Set Up Project` for the repo
-    c. click on `Use Existing Config`
-    d. click on `Start Building`
+### Reshuffle Monday Connector
 
-10. If circle CI checks are all green, you are all set!
+This connector provides a connector for [Monday](https://monday.com).
 
-// Keep documentation template below
+To get a token ([From here](https://monday.com/developers/v2#authentication-section)):
 
-## END
-
-# reshuffle-_CONNECTOR_NAME_-connector
-
-### Reshuffle _CONNECTOR_NAME_ Connector
-
-This connector provides <description>.
+1. Log into your monday.com account.
+2. Click on your avatar (picture icon) in the bottom left corner.
+3. Select Admin from the resulting menu (this requires you to have admin permissions).
+4. Go to the API section.
+5. Generate a “API v2 Token”
+6. Copy your token.
 
 #### Configuration Options:
+
 ```typescript
-interface _CONNECTOR_NAME_ConnectorConfigOptions {
-  foo: string // foo description
-  bar?: number // bar description
+interface MondayConnectorConfigOptions {
+  token: string
 }
 ```
 
 #### Connector events
 
-##### event1 description
-The connector fires this event when ...
+##### listening to Monday events
 
-##### event2 description
-The connector fires this event when ...
+To listen to events happening in Monday, pass the event type and options or the ID of an existing webhook
+
+```typescript
+interface MondayConnectorEventOptions {
+  boardId: number
+  baseUrl: string
+  type:
+    | 'incoming_notification'
+    | 'change_column_value'
+    | 'change_specific_column_value'
+    | 'create_item'
+    | 'create_update'
+  config?: Record<string, unknown>
+  path?: string
+  webhookId?: string
+  deleteWebhookOnExit?: boolean
+}
+```
 
 #### Connector actions
 
-##### action1
-The connector provides action1 which ...
+##### getBoard
 
-##### action2
-The connector provides action2 which ...
+Query a board or a list of boards
+
+```typescript
+const board = await connector.getBoard(BOARD_ID)
+```
+
+##### getColumn
+
+Query a column or a list of columns
+
+```typescript
+const column = await connector.getColumn(COLUMN_ID)
+```
+
+##### getGroup
+
+Query a group or a list of groups
+
+```typescript
+const group = await connector.getGroup(GROUP_ID)
+```
+
+##### getItem
+
+Query an item or a list of items
+
+```typescript
+const item = await connector.getItem(ITEM_ID)
+```
+
+##### createItem
+
+Create an item
+
+```typescript
+const item = await connector.createItem(BOARD_ID, 'my new item')
+```
+
+##### updateItem
+
+Update an item
+
+```typescript
+const item = await connector.updateItem(ITEM_ID, 'my updated item')
+```
+
+##### createWebhook
+
+Create a webhook. Note - using when you create an `on` handler the event will be created for you if you dont pass a webhookId
+
+```typescript
+const webhook = await connector.createWebhook(
+  BOARD_ID,
+  'https://example.com/monday-webhook',
+  'create_item',
+)
+```
+
+##### deleteWebhook
+
+Delete a webhook
+
+```typescript
+const deletedWebhook = await connector.deleteWebhook(WEBHOOK_ID)
+```
+
+##### sdk
+
+Full access to the Monday GraphQL API
+
+```typescript
+const query = await connector.sdk.api('query { users { name } }')
+```
