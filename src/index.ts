@@ -10,13 +10,14 @@ export interface MondayConnectorConfigOptions {
 
 export interface MondayConnectorEventOptions {
   boardId: number
-  base_url: string
-  eventType:
+  baseUrl: string
+  type:
     | 'incoming_notification'
     | 'change_column_value'
     | 'change_specific_column_value'
     | 'create_item'
     | 'create_update'
+  config?: Record<string, unknown>
   path?: string
   webhookId?: string
   deleteWebhookOnExit?: boolean
@@ -99,8 +100,8 @@ mutation($item_id: Int!, $body: String!) {
 }`
 
 const CREATE_WEBHOOK_QUERY = `#graphql
-mutation($board_id: Int!, $url: String!, $event: WebhookEventType!) {
-  create_webhook ( board_id: $board_id, url: $url, event: $event) {
+mutation($board_id: Int!, $url: String!, $event: WebhookEventType!, $config: JSON) {
+  create_webhook ( board_id: $board_id, url: $url, event: $event, config: $config ) {
   id
     board_id
   }
@@ -108,7 +109,7 @@ mutation($board_id: Int!, $url: String!, $event: WebhookEventType!) {
 
 const DELETE_WEBHOOK_QUERY = `#graphql
 mutation($id: Int!) {
-  delete_webhook ( id: $id) {
+  delete_webhook ( id: $id ) {
     id
     board_id
   }
@@ -156,6 +157,7 @@ export default class MondayConnector extends BaseHttpConnector<
         event.options.boardId,
         event.options.baseUrl + event.options.path,
         event.options.eventType,
+        event.options.config,
       ).then((x?: Record<string, any>) => {
         if (x?.create_webhook) {
           event.options.webhookId = Number(x.create_webhook.id)
@@ -239,9 +241,14 @@ export default class MondayConnector extends BaseHttpConnector<
     })
   }
 
-  createWebhook(boardId: number, url: string, event: string): Promise<MondayApiReponse['data']> {
+  createWebhook(
+    boardId: number,
+    url: string,
+    event: string,
+    config?: Record<string, unknown>,
+  ): Promise<MondayApiReponse['data']> {
     return this._api(CREATE_WEBHOOK_QUERY, {
-      variables: { board_id: boardId, url, event },
+      variables: { board_id: boardId, url, event, config },
     })
   }
 
