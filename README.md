@@ -55,6 +55,25 @@ Query a board or a list of boards
 const board = await connector.getBoard(BOARD_ID)
 ```
 
+##### getBoardByName
+
+Find a board ID by its name
+
+```typescript
+const boardId = await connector.getBoardByName('My board')
+```
+
+##### getBoardItems
+
+Get all the items in a board. The returned object has a `name` field with
+the name of the board, and an `items` object, whose with item data accessible
+by item IDs. Data for each item is an object including the item's `name` and
+values for each column.
+
+```typescript
+const boardItems = await connector.getBoardItems(boardId)
+```
+
 ##### getColumn
 
 Query a column or a list of columns
@@ -115,10 +134,18 @@ Delete a webhook
 const deletedWebhook = await connector.deleteWebhook(WEBHOOK_ID)
 ```
 
+##### query
+
+Run any GraphQL query
+
+```typescript
+const res = await connector.query('query { users { name } }')
+```
+
 ##### sdk
 
 Full access to the Monday GraphQL API
 
 ```typescript
-const query = await connector.sdk.api('query { users { name } }')
+const sdk = await connector.sdk()
 ```
