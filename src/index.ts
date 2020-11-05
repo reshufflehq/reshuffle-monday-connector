@@ -61,6 +61,7 @@ query ($board_ids: [Int]!) {
       id
     }
     columns {
+      id
       title
       type
     }
@@ -237,7 +238,6 @@ export default class MondayConnector extends BaseHttpConnector<
             id
             name
             column_values {
-              id
               title
               value
             }
