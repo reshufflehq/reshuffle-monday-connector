@@ -26,6 +26,7 @@ export interface MondayConnectorEventOptions {
 interface MondayApiReponse {
   data?: Record<string, any>
   errors?: Record<string, any>[]
+  error_message?: string
   account_id?: string
 }
 
@@ -116,8 +117,18 @@ mutation($id: Int!) {
 }`
 
 export class MondayError extends Error {
-  constructor(public errors?: any[]) {
-    super(`Monday API Error (${errors ? errors.length : 'unknown'})`)
+  constructor(public res: MondayApiReponse) {
+    super(
+      `Monday API Error${
+        res.errors
+          ? res.errors.length === 1
+            ? res.errors[0].message
+            : `s (${res.errors.length})`
+          : res.error_message
+          ? res.error_message
+          : ''
+      }`,
+    )
   }
 }
 
@@ -199,13 +210,16 @@ export default class MondayConnector extends BaseHttpConnector<
     if ('data' in res) {
       return res.data
     }
-    throw new MondayError(res.errors)
+    throw new MondayError(res)
   }
 
-  columnValuesToObject(columnValues: { title: string; value: string }[]): Record<string, any> {
+  columnValuesToObject(
+    columnValues: { title: string; value: string }[],
+    mapper: (value: any) => any = (x) => x,
+  ): Record<string, any> {
     const obj: Record<string, any> = {}
     for (const cv of columnValues) {
-      obj[cv.title] = JSON.parse(cv.value)
+      obj[cv.title] = mapper(JSON.parse(cv.value))
     }
     return obj
   }
@@ -293,6 +307,54 @@ export default class MondayConnector extends BaseHttpConnector<
       group_id: groupId,
       item_name: itemName,
     })
+  }
+
+  async updateColumnValues(
+    boardId: number,
+    itemId: number,
+    updaters: Record<string, (value: string) => any>,
+  ): Promise<void> {
+    const data = await this.query(`
+      query {
+        items (ids: ${itemId}) {
+          column_values {
+            id
+            title
+            value
+          }
+        }
+      }
+    `)
+    if (!data) {
+      throw new Error(`Unable to read item: ${itemId}`)
+    }
+
+    const newValues: any = {}
+    const columnValues = data.items[0].column_values
+    for (const title of Object.keys(updaters)) {
+      const cv = columnValues.find((cv) => cv.title === title)
+      if (!cv) {
+        throw new Error(`Column title not found: ${title}`)
+      }
+      const updater = updaters[title]
+      if (typeof updater !== 'function') {
+        throw new Error(`Missing or invalid updater for: ${title}`)
+      }
+      const value = JSON.parse(cv.value)
+      newValues[cv.id] = String(updater(value))
+    }
+
+    await this.query(`
+      mutation {
+        change_multiple_column_values (
+          board_id: ${boardId},
+          item_id: ${itemId},
+          column_values: ${JSON.stringify(JSON.stringify(newValues))}
+        ) {
+          id
+        }
+      }
+    `)
   }
 
   createWebhook(
