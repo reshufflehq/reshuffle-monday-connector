@@ -309,6 +309,54 @@ export default class MondayConnector extends BaseHttpConnector<
     })
   }
 
+  async updateColumnValues(
+    boardId: number,
+    itemId: number,
+    updaters: Record<string, (value: string) => any>,
+  ): Promise<void> {
+    const data = await this.query(`
+      query {
+        items (ids: ${itemId}) {
+          column_values {
+            id
+            title
+            value
+          }
+        }
+      }
+    `)
+    if (!data) {
+      throw new Error(`Unable to read item: ${itemId}`)
+    }
+
+    const newValues: any = {}
+    const columnValues = data.items[0].column_values
+    for (const title of Object.keys(updaters)) {
+      const cv = columnValues.find((cv) => cv.title === title)
+      if (!cv) {
+        throw new Error(`Column title not found: ${title}`)
+      }
+      const updater = updaters[title]
+      if (typeof updater !== 'function') {
+        throw new Error(`Missing or invalid updater for: ${title}`)
+      }
+      const value = JSON.parse(cv.value)
+      newValues[cv.id] = String(updater(value))
+    }
+
+    await this.query(`
+      mutation {
+        change_multiple_column_values (
+          board_id: ${boardId},
+          item_id: ${itemId},
+          column_values: ${JSON.stringify(JSON.stringify(newValues))}
+        ) {
+          id
+        }
+      }
+    `)
+  }
+
   createWebhook(
     boardId: number,
     url: string,
