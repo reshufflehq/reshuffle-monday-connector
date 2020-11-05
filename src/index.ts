@@ -237,6 +237,7 @@ export default class MondayConnector extends BaseHttpConnector<
             id
             name
             column_values {
+              id
               title
               value
             }
