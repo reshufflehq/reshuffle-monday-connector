@@ -79,7 +79,7 @@ const boardItems = await connector.getBoardItems(boardId)
 Query a column or a list of columns
 
 ```typescript
-const column = await connector.getColumn(COLUMN_ID)
+const column = await connector.getColumn(BOARD_ID)
 ```
 
 ##### getGroup
@@ -100,10 +100,22 @@ const item = await connector.getItem(ITEM_ID)
 
 ##### createItem
 
-Create an item
+Creates a new item to the board. The function can take up to 4 arguments:
 
 ```typescript
-const item = await connector.createItem(BOARD_ID, 'my new item')
+required
+board_id: int
+item_name: string
+```
+
+```typescript
+optional
+column_values: JSON
+group_id: string.
+```
+
+```typescript
+const item = await connector.createItem(BOARD_ID, item_name, column_values, group_id)
 ```
 
 ##### updateItem
