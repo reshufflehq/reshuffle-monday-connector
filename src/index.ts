@@ -24,8 +24,8 @@ export interface MondayConnectorEventOptions {
 }
 
 interface MondayApiReponse {
-  data?: Record<string, unknown>
-  errors?: Record<string, unknown>[]
+  data?: Record<string, any>
+  errors?: Record<string, any>[]
   account_id?: string
 }
 
@@ -154,7 +154,7 @@ export default class MondayConnector extends BaseHttpConnector<
         event.options.baseUrl + event.options.path,
         event.options.eventType,
         event.options.config,
-      ).then((x?: Record<string, any>) => {
+      ).then((x) => {
         if (x?.create_webhook) {
           event.options.webhookId = Number(x.create_webhook.id)
         }
@@ -194,10 +194,7 @@ export default class MondayConnector extends BaseHttpConnector<
     return handled
   }
 
-  async query(
-    qs: string,
-    variables?: Record<string, any>,
-  ): Promise<any> {
+  async query(qs: string, variables?: Record<string, any>): Promise<MondayApiReponse['data']> {
     const res = await this._sdk.api(qs, variables ? { variables } : undefined)
     if ('data' in res) {
       return res.data
@@ -205,9 +202,7 @@ export default class MondayConnector extends BaseHttpConnector<
     throw new MondayError(res.errors)
   }
 
-  columnValuesToObject(
-    columnValues: { title: string, value: string }[],
-  ): Record<string, any> {
+  columnValuesToObject(columnValues: { title: string; value: string }[]): Record<string, any> {
     const obj: Record<string, any> = {}
     for (const cv of columnValues) {
       obj[cv.title] = JSON.parse(cv.value)
@@ -221,11 +216,19 @@ export default class MondayConnector extends BaseHttpConnector<
 
   async getBoardByName(name: string): Promise<number> {
     const res = await this.query('query { boards { id name } }')
-    const board = (res?.boards as any).filter((b) => b.name === name)[0]
+    const board = res?.boards.filter((b) => b.name === name)[0]
     return board && parseInt(board.id, 10)
   }
 
-  async getBoardItems(boardId: string | number) {
+  async getBoardItems(
+    boardId: string | number,
+  ): Promise<
+    | {
+        name: any
+        items: any
+      }
+    | undefined
+  > {
     const res = await this.query(`
       query {
         boards (ids: ${boardId}) {
@@ -241,8 +244,8 @@ export default class MondayConnector extends BaseHttpConnector<
         }
       }
     `)
-    const board = res.boards[0]
-    const items: any = {}
+    const board = res?.boards[0]
+    const items = {}
     for (const item of board.items) {
       items[item.id] = this.columnValuesToObject(item.column_values)
       items[item.id].name = item.name
