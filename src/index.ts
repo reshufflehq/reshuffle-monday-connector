@@ -214,7 +214,7 @@ export default class MondayConnector extends BaseHttpConnector<
     return this.query(GET_BOARD_QUERY, { board_ids: boardIds })
   }
 
-  async getBoardByName(name: string): Promise<number> {
+  async getBoardIdByName(name: string): Promise<number> {
     const res = await this.query('query { boards { id name } }')
     const board = res?.boards.filter((b) => b.name === name)[0]
     return board && parseInt(board.id, 10)
