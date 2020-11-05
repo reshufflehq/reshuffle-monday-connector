@@ -55,12 +55,12 @@ Query a board or a list of boards
 const board = await connector.getBoard(BOARD_ID)
 ```
 
-##### getBoardByName
+##### getBoardIdByName
 
 Find a board ID by its name
 
 ```typescript
-const boardId = await connector.getBoardByName('My board')
+const boardId = await connector.getBoardIdByName('My board')
 ```
 
 ##### getBoardItems
