@@ -100,19 +100,14 @@ const item = await connector.getItem(ITEM_ID)
 
 ##### createItem
 
-Creates a new item to the board. The function can take up to 4 arguments:
+Creates a new item to the board.
 
-```typescript
-required
-board_id: int
-item_name: string
-```
-
-```typescript
-optional
-column_values: JSON
-group_id: string.
-```
+| Parameter     | Type   | Required |
+| ------------- | ------ | -------- |
+| board_id      | Int    | Yes      |
+| item_name     | String | Yes      |
+| column_values | JSON   | No       |
+| group_id      | String | No       |
 
 ```typescript
 const item = await connector.createItem(BOARD_ID, item_name, column_values, group_id)
