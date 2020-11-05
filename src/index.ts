@@ -26,6 +26,7 @@ export interface MondayConnectorEventOptions {
 interface MondayApiReponse {
   data?: Record<string, any>
   errors?: Record<string, any>[]
+  error_message?: string
   account_id?: string
 }
 
@@ -116,8 +117,18 @@ mutation($id: Int!) {
 }`
 
 export class MondayError extends Error {
-  constructor(public errors?: any[]) {
-    super(`Monday API Error (${errors ? errors.length : 'unknown'})`)
+  constructor(public res: MondayApiReponse) {
+    super(
+      `Monday API Error${
+        res.errors
+          ? res.errors.length === 1
+            ? res.errors[0].message
+            : `s (${res.errors.length})`
+          : res.error_message
+          ? res.error_message
+          : ''
+      }`,
+    )
   }
 }
 
@@ -199,7 +210,7 @@ export default class MondayConnector extends BaseHttpConnector<
     if ('data' in res) {
       return res.data
     }
-    throw new MondayError(res.errors)
+    throw new MondayError(res)
   }
 
   columnValuesToObject(columnValues: { title: string; value: string }[]): Record<string, any> {
