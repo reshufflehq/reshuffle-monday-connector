@@ -114,6 +114,21 @@ Update an item
 const item = await connector.updateItem(ITEM_ID, 'my updated item')
 ```
 
+##### updateColumnValues
+
+Update an specific item in a specific board with new values. The `updaters`
+object should include one update function for each column that needs to be
+updated, with property names being the titles for these columns. Each
+functions receive the old value and should return the new value for that
+column.
+
+```typescript
+await updateColumnValues(myBoardId, myItemId, {
+  Name: (name: string) => name.toUpperCase,
+  Phone: (phone: string) => phone.startsWith('+') ? phone : `+${phone}`,
+})
+```
+
 ##### createWebhook
 
 Create a webhook. Note - using when you create an `on` handler the event will be created for you if you dont pass a webhookId
