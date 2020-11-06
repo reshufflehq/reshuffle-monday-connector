@@ -79,7 +79,7 @@ const boardItems = await connector.getBoardItems(boardId)
 Query a column or a list of columns
 
 ```typescript
-const column = await connector.getColumn(COLUMN_ID)
+const column = await connector.getColumn(BOARD_ID)
 ```
 
 ##### getGroup
@@ -100,10 +100,26 @@ const item = await connector.getItem(ITEM_ID)
 
 ##### createItem
 
-Create an item
+Creates a new item to the board.
+
+| Parameter     | Type   | Required |
+| ------------- | ------ | -------- |
+| board_id      | Int    | Yes      |
+| item_name     | String | Yes      |
+| column_values | JSON   | No       |
+| group_id      | String | No       |
+
+Example of column_values
 
 ```typescript
-const item = await connector.createItem(BOARD_ID, 'my new item')
+const column_values = JSON.stringify({
+  [COLUMN_ID]: 'example data',
+  [COLUMN_ID2]: 'another example',
+})
+```
+
+```typescript
+const item = await connector.createItem(BOARD_ID, item_name, column_values, group_id)
 ```
 
 ##### updateItem

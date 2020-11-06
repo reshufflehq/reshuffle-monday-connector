@@ -62,6 +62,7 @@ query ($board_ids: [Int]!) {
       id
     }
     columns {
+      id
       title
       type
     }
@@ -87,8 +88,8 @@ query ($item_ids: [Int]!) {
 }`
 
 const CREATE_ITEM_QUERY = `#graphql
-mutation ($board_id: Int!, $group_id: String, $item_name: String) {
-  create_item (board_id: $board_id, group_id: $group_id, item_name: $item_name) {
+mutation ($board_id: Int!, $group_id: String, $item_name: String, $column_values: JSON) {
+  create_item (board_id: $board_id, group_id: $group_id, item_name: $item_name, column_values: $column_values) {
     id
   }
 }`
@@ -288,12 +289,14 @@ export default class MondayConnector extends BaseHttpConnector<
   createItem(
     boardId: number,
     itemName?: string,
+    columnValues?: JSON,
     groupId?: string,
   ): Promise<MondayApiReponse['data']> {
     return this.query(CREATE_ITEM_QUERY, {
       board_id: boardId,
       group_id: groupId,
       item_name: itemName,
+      column_values: columnValues
     })
   }
 
