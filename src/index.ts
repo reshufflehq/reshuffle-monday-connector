@@ -237,13 +237,10 @@ export default class MondayConnector extends BaseHttpConnector<
 
   async getBoardItems(
     boardId: string | number,
-  ): Promise<
-    | {
-        name: any
-        items: any
-      }
-    | undefined
-  > {
+  ): Promise<{
+    name: any
+    items: any
+  }> {
     const res = await this.query(`
       query {
         boards (ids: ${boardId}) {
@@ -264,6 +261,7 @@ export default class MondayConnector extends BaseHttpConnector<
     for (const item of board.items) {
       items[item.id] = this.columnValuesToObject(item.column_values)
       items[item.id].name = item.name
+      items[item.id].id = item.id
     }
     return { name: board.name, items }
   }
@@ -296,7 +294,7 @@ export default class MondayConnector extends BaseHttpConnector<
       board_id: boardId,
       group_id: groupId,
       item_name: itemName,
-      column_values: columnValues
+      column_values: columnValues,
     })
   }
 
