@@ -214,13 +214,15 @@ export default class MondayConnector extends BaseHttpConnector<
     throw new MondayError(res)
   }
 
-  columnValuesToObject(
-    columnValues: { title: string; value: string }[],
+  private columnValuesToObject(
+    columnValues: { title: string; type: string; value: string }[],
     mapper: (value: any) => any = (x) => x,
   ): Record<string, any> {
     const obj: Record<string, any> = {}
     for (const cv of columnValues) {
-      obj[cv.title] = mapper(JSON.parse(cv.value))
+      const str = JSON.parse(cv.value)
+      const val = cv.type === 'numeric' ? parseInt(str) : str
+      obj[cv.title] = mapper(val)
     }
     return obj
   }
@@ -250,6 +252,7 @@ export default class MondayConnector extends BaseHttpConnector<
             name
             column_values {
               title
+              type
               value
             }
           }
