@@ -287,18 +287,22 @@ export default class MondayConnector extends BaseHttpConnector<
     return this.query(GET_ITEMS_QUERY, { item_ids: itemIds })
   }
 
-  createItem(
+  async createItem(
     boardId: number,
     itemName?: string,
-    columnValues?: JSON,
+    columnValues?: Record<string, (value: string) => any>,
     groupId?: string,
-  ): Promise<MondayApiReponse['data']> {
-    return this.query(CREATE_ITEM_QUERY, {
+  ): Promise<string> {
+    const res = await this.query(CREATE_ITEM_QUERY, {
       board_id: boardId,
       group_id: groupId,
       item_name: itemName,
-      column_values: columnValues,
     })
+    const itemId: string = (res as any).create_item.id
+    if (columnValues) {
+      this.updateColumnValues(boardId, itemId, columnValues)
+    }
+    return itemId
   }
 
   updateItem(
@@ -314,8 +318,8 @@ export default class MondayConnector extends BaseHttpConnector<
   }
 
   async updateColumnValues(
-    boardId: number,
-    itemId: number,
+    boardId: number | string,
+    itemId: number | string,
     updaters: Record<string, (value: string) => any>,
   ): Promise<void> {
     const data = await this.query(`
