@@ -22,6 +22,7 @@ export interface MondayConnectorEventOptions {
   columnId?: string // for type === ChangeSpecificColumnValue
 }
 
+// Translate JavaScript friendly names into Monday event names.
 const JS_TO_MONDAY_EVENT_NAMES = {
   IncomingNotification: 'incoming_notification',
   ChangeColumnValue: 'change_column_value',
@@ -30,6 +31,9 @@ const JS_TO_MONDAY_EVENT_NAMES = {
   CreateUpdate: 'create_update',
 }
 
+// Translate Monday event names into JavaScript friendly names. Some
+// Monday names appear differently in the documentation and the actual
+// event data so they appear here twice to be on the safe side.
 const MONDAY_TO_JS_EVENT_NAMES = {
   incoming_notification: 'IncomingNotification',
   change_column_value: 'ChangeColumnValue',
@@ -45,9 +49,9 @@ interface MondayEvent {
   originalTriggerUuid: any
   boardId: string
   groupId: string
-  itemId: string // pulseId
+  itemId: string // Copid from the pulseId field to match new API terms
   pulseId: string // pulseId
-  itemName: string // pulseName
+  itemName: string // Copid from the pulseName field to match new API terms
   pulseName: string // pulseName
   columnId: string
   columnType: string
@@ -206,7 +210,7 @@ export default class MondayConnector extends BaseHttpConnector<
     }
 
     const event = new EventConfiguration(
-      eventId || `Monday${options.boardId}.${options.type}/${this.id}`,
+      eventId || `MondayConnector/${options.boardId}/${options.type}/${this.id}`,
       this,
       { boardId, type: options.type, columnId: options.columnId },
     )
@@ -225,6 +229,10 @@ export default class MondayConnector extends BaseHttpConnector<
     }
 
     return event
+  }
+
+  onRemoveEvent(ec: EventConfiguration): void {
+    delete this.eventConfigurations[ec.id]
   }
 
   async handle(req: Request, res: Response): Promise<boolean> {
