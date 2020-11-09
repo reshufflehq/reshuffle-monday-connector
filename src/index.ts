@@ -22,7 +22,7 @@ export interface MondayConnectorEventOptions {
   columnId?: string // for type === ChangeSpecificColumnValue
 }
 
-const EventTypes = {
+const JS_TO_MONDAY_EVENT_NAMES = {
   IncomingNotification: 'incoming_notification',
   ChangeColumnValue: 'change_column_value',
   ChangeSpecificColumnValue: 'change_specific_column_value',
@@ -30,7 +30,7 @@ const EventTypes = {
   CreateUpdate: 'create_update',
 }
 
-const SepytTneve = {
+const MONDAY_TO_JS_EVENT_NAMES = {
   incoming_notification: 'IncomingNotification',
   change_column_value: 'ChangeColumnValue',
   update_column_value: 'ChangeColumnValue',
@@ -195,7 +195,7 @@ export default class MondayConnector extends BaseHttpConnector<
     if (!MONDAY_ID_REGEX.test(boardId)) {
       throw new Error(`Invalid board id: ${options.boardId}`)
     }
-    if (!EventTypes[options.type]) {
+    if (!JS_TO_MONDAY_EVENT_NAMES[options.type]) {
       throw new Error(`Invalid event type: ${options.type}`)
     }
     if (
@@ -217,7 +217,7 @@ export default class MondayConnector extends BaseHttpConnector<
       this.createWebhook(
         event.options.boardId,
         this.webhookURL,
-        EventTypes[options.type],
+        JS_TO_MONDAY_EVENT_NAMES[options.type],
         options.columnId,
       ).then((id) => {
         this.webhookId = id
@@ -259,7 +259,7 @@ export default class MondayConnector extends BaseHttpConnector<
       previousValue: ev.previousValue,
       changedAt: ev.changedAt,
       isTopGroup: ev.isTopGroup,
-      type: SepytTneve[ev.type],
+      type: MONDAY_TO_JS_EVENT_NAMES[ev.type],
       triggerTime: ev.triggerTime,
       subscriptionId: String(ev.subscriptionId),
       triggerUuid: ev.triggerUuid,
@@ -444,7 +444,10 @@ export default class MondayConnector extends BaseHttpConnector<
       params.config = { columnId }
     }
     const res = await this.query(CREATE_WEBHOOK_QUERY, params)
-    return (res as any).create_webhook.id
+    if (!res) {
+      throw new Error(`Failed to create webhook: boardId=${boardId} event=${event}`)
+    }
+    return res.create_webhook.id
   }
 
   deleteWebhook(id: number): Promise<MondayApiReponse['data']> {
