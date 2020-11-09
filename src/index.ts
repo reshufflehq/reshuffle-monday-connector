@@ -1,26 +1,65 @@
+import { Request, Response } from 'express'
 import { Reshuffle, BaseHttpConnector, EventConfiguration } from 'reshuffle-base-connector'
-import { Request, Response, NextFunction } from 'express'
 import mondaySdk from 'monday-sdk-js'
 
-const DEFAULT_WEBHOOK_PATH = '/monday-event'
+const WEBHOOK_PATH = '/reshuffle-monday-connector/webhook'
 
 export interface MondayConnectorConfigOptions {
   token: string
+  baseURL: string
 }
 
+const MONDAY_ID_REGEX = /^\d{9,10}$/
+
 export interface MondayConnectorEventOptions {
-  boardId: number
-  baseUrl: string
+  boardId: string | number
   type:
-    | 'incoming_notification'
-    | 'change_column_value'
-    | 'change_specific_column_value'
-    | 'create_item'
-    | 'create_update'
-  config?: Record<string, unknown>
-  path?: string
-  webhookId?: string
-  deleteWebhookOnExit?: boolean
+    | 'IncomingNotification'
+    | 'ChangeColumnValue'
+    | 'ChangeSpecificColumnValue'
+    | 'CreateItem'
+    | 'CreateUpdate'
+  columnId?: string // for type === ChangeSpecificColumnValue
+}
+
+const EventTypes = {
+  IncomingNotification: 'incoming_notification',
+  ChangeColumnValue: 'change_column_value',
+  ChangeSpecificColumnValue: 'change_specific_column_value',
+  CreateItem: 'create_item',
+  CreateUpdate: 'create_update',
+}
+
+const SepytTneve = {
+  incoming_notification: 'IncomingNotification',
+  change_column_value: 'ChangeColumnValue',
+  update_column_value: 'ChangeColumnValue',
+  change_specific_column_value: 'ChangeSpecificColumnValue',
+  update_specific_column_value: 'ChangeSpecificColumnValue',
+  create_item: 'CreateItem',
+  create_update: 'CreateUpdate',
+}
+
+interface MondayEvent {
+  userId: string
+  originalTriggerUuid: any
+  boardId: string
+  groupId: string
+  itemId: string // pulseId
+  pulseId: string // pulseId
+  itemName: string // pulseName
+  pulseName: string // pulseName
+  columnId: string
+  columnType: string
+  columnTitle: string
+  value: { value: any }
+  previousValue: { value: any }
+  changedAt: number
+  isTopGroup: boolean
+  type: string
+  triggerTime: string
+  subscriptionId: string
+  triggerUuid: string
 }
 
 interface MondayApiReponse {
@@ -104,8 +143,7 @@ mutation($item_id: Int!, $body: String!) {
 const CREATE_WEBHOOK_QUERY = `#graphql
 mutation($board_id: Int!, $url: String!, $event: WebhookEventType!, $config: JSON) {
   create_webhook ( board_id: $board_id, url: $url, event: $event, config: $config ) {
-  id
-    board_id
+    id
   }
 }`
 
@@ -113,7 +151,6 @@ const DELETE_WEBHOOK_QUERY = `#graphql
 mutation($id: Int!) {
   delete_webhook ( id: $id ) {
     id
-    board_id
   }
 }`
 
@@ -138,72 +175,103 @@ export default class MondayConnector extends BaseHttpConnector<
   MondayConnectorEventOptions
 > {
   _sdk: MondaySdk
+  private webhookURL: string
+  private webhookId?: string
+  private webhookLastChangedAt?: number
 
   constructor(app: Reshuffle, options: MondayConnectorConfigOptions, id?: string) {
     super(app, options, id)
+    this.webhookURL = validateBaseURL(options.baseURL) + WEBHOOK_PATH
     this._sdk = mondaySdk({ token: options.token })
+    this.app.registerHTTPDelegate(WEBHOOK_PATH, this)
   }
 
   on(
     options: MondayConnectorEventOptions,
-    handler: ({ req, res, next }: { req: Request; res: Response; next: NextFunction }) => void,
-    eventId: string,
+    handler: (event: MondayEvent) => void,
+    eventId?: string,
   ): EventConfiguration {
-    if (!eventId) {
-      eventId = `Monday${options.path}/${this.id}`
+    const boardId = String(options.boardId)
+    if (!MONDAY_ID_REGEX.test(boardId)) {
+      throw new Error(`Invalid board id: ${options.boardId}`)
     }
-    const event = new EventConfiguration(eventId, this, options)
-    event.options.path = event.options.path || DEFAULT_WEBHOOK_PATH
-    event.options.deleteWebhookOnExit = event.options.deleteWebhookOnExit || true
+    if (!EventTypes[options.type]) {
+      throw new Error(`Invalid event type: ${options.type}`)
+    }
+    if (
+      options.type === 'ChangeSpecificColumnValue' &&
+      !MONDAY_ID_REGEX.test(options.columnId || '')
+    ) {
+      throw new Error(`Invalid column id for type ChangeSpecificColumnValue: ${options.columnId}`)
+    }
+
+    const event = new EventConfiguration(
+      eventId || `Monday${options.boardId}.${options.type}/${this.id}`,
+      this,
+      { boardId, type: options.type, columnId: options.columnId },
+    )
     this.eventConfigurations[event.id] = event
-
     this.app.when(event, handler as any)
-    this.app.registerHTTPDelegate(event.options.path, this)
 
-    if (!event.options.webhookId) {
+    if (!this.webhookId) {
       this.createWebhook(
         event.options.boardId,
-        event.options.baseUrl + event.options.path,
-        event.options.eventType,
-        event.options.config,
-      ).then((x) => {
-        if (x?.create_webhook) {
-          event.options.webhookId = Number(x.create_webhook.id)
-        }
+        this.webhookURL,
+        EventTypes[options.type],
+        options.columnId,
+      ).then((id) => {
+        this.webhookId = id
       })
     }
 
     return event
   }
 
-  async handle(req: Request, res: Response, next: NextFunction): Promise<boolean> {
-    const { method, path } = req
-    let handled = false
-
-    const eventConfiguration = Object.values(this.eventConfigurations).find(
-      ({ options }) => options.path === path,
-    )
-
-    if (eventConfiguration) {
-      if (req.body.challenge) {
-        this.app.getLogger().info('Handling Monday web hook challenge')
-        res.json({ challenge: req.body.challenge })
-        handled = true
-      } else {
-        this.app.getLogger().info('Handling Monday event')
-        handled = await this.app.handleEvent(eventConfiguration.id, {
-          ...eventConfiguration,
-          req,
-          res,
-        })
+  async handle(req: Request, res: Response): Promise<boolean> {
+    if (req.body.challenge) {
+      this.app.getLogger().info('Handling Monday web hook challenge')
+      res.json({ challenge: req.body.challenge })
+    } else if (this.started) {
+      const ev = req.body.event
+      if (this.webhookLastChangedAt !== ev.changedAt) {
+        await this.handleWebhookEvent(ev)
+        this.webhookLastChangedAt = ev.changedAt
       }
-    } else {
-      this.app.getLogger().warn(`No Monday event configuration matching ${method} ${path}`)
     }
 
-    next()
+    return true
+  }
 
-    return handled
+  private async handleWebhookEvent(ev: Record<string, any>) {
+    const event: MondayEvent = {
+      userId: String(ev.userId),
+      originalTriggerUuid: ev.originalTriggerUuid,
+      boardId: String(ev.boardId),
+      groupId: ev.groupId,
+      itemId: String(ev.pulseId),
+      pulseId: String(ev.pulseId),
+      itemName: ev.pulseName,
+      pulseName: ev.pulseName,
+      columnId: ev.columnId,
+      columnType: ev.columnType,
+      columnTitle: ev.columnTitle,
+      value: ev.value,
+      previousValue: ev.previousValue,
+      changedAt: ev.changedAt,
+      isTopGroup: ev.isTopGroup,
+      type: SepytTneve[ev.type],
+      triggerTime: ev.triggerTime,
+      subscriptionId: String(ev.subscriptionId),
+      triggerUuid: ev.triggerUuid,
+    }
+    this.app.getLogger().info(`Handling Monday event: boardId=${event.boardId} type=${event.type}`)
+
+    for (const ec of Object.values(this.eventConfigurations)) {
+      const o = ec.options
+      if (o.boardId === event.boardId && o.type === event.type) {
+        await this.app.handleEvent(ec.id, event)
+      }
+    }
   }
 
   async query(qs: string, variables?: Record<string, any>): Promise<MondayApiReponse['data']> {
@@ -365,34 +433,38 @@ export default class MondayConnector extends BaseHttpConnector<
     `)
   }
 
-  createWebhook(
-    boardId: number,
+  async createWebhook(
+    boardId: number | string,
     url: string,
     event: string,
-    config?: Record<string, unknown>,
-  ): Promise<MondayApiReponse['data']> {
-    return this.query(CREATE_WEBHOOK_QUERY, {
-      board_id: boardId,
-      url,
-      event,
-      config,
-    })
+    columnId?: string,
+  ): Promise<string> {
+    const params: any = { board_id: Number(boardId), url, event }
+    if (event === 'ChangeSpecificColumnValue') {
+      params.config = { columnId }
+    }
+    const res = await this.query(CREATE_WEBHOOK_QUERY, params)
+    return (res as any).create_webhook.id
   }
 
   deleteWebhook(id: number): Promise<MondayApiReponse['data']> {
     return this.query(DELETE_WEBHOOK_QUERY, { id })
   }
 
-  onRemoveEvent(event: EventConfiguration): void {
-    event.options.deleteWebhookOnExit &&
-      this.deleteWebhook(event.options.webhookId).then(() =>
-        this.app.getLogger().info(`Removed Monday web hook id: ${event.options.webhookId}`),
-      )
-  }
-
   sdk(): MondaySdk {
     return this._sdk
   }
+}
+
+function validateBaseURL(url?: string): string {
+  if (typeof url !== 'string') {
+    throw new Error(`Invalid url: ${url}`)
+  }
+  const match = url.match(/^(https:\/\/[\w-]+(\.[\w-]+)*(:\d{1,5})?)\/?$/)
+  if (!match) {
+    throw new Error(`Invalid url: ${url}`)
+  }
+  return match[1]
 }
 
 export { MondayConnector }
