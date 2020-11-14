@@ -18,6 +18,8 @@ To get a token ([From here](https://monday.com/developers/v2#authentication-sect
 ```typescript
 interface MondayConnectorConfigOptions {
   token: string
+  baseURL?: string
+  webhookPath?: string
 }
 ```
 
@@ -25,24 +27,27 @@ interface MondayConnectorConfigOptions {
 
 ##### listening to Monday events
 
-To listen to events happening in Monday, pass the event type and options or the ID of an existing webhook
+To listen to events happening in Monday, create an event handler with the
+boardId, event type optional column id:
 
 ```typescript
 interface MondayConnectorEventOptions {
-  boardId: number
-  baseUrl: string
+  boardId: string | number
   type:
-    | 'incoming_notification'
-    | 'change_column_value'
-    | 'change_specific_column_value'
-    | 'create_item'
-    | 'create_update'
-  config?: Record<string, unknown>
-  path?: string
-  webhookId?: string
-  deleteWebhookOnExit?: boolean
+    | 'IncomingNotification'
+    | 'ChangeColumnValue'
+    | 'ChangeSpecificColumnValue'
+    | 'CreateItem'
+    | 'CreateUpdate'
+  columnId?: string // for type === ChangeSpecificColumnValue
 }
 ```
+
+Events require that an integration webhook be configured in Monday. The
+connector does not configure integrations automatically becuase at the
+moment it has no way of tracking which integrations are already configured
+in Monday. You can either configure an integration through the Monday UI or
+call `createEventWebhook`.
 
 #### Connector actions
 
@@ -150,10 +155,22 @@ await updateColumnValues(myBoardId, myItemId, {
 Create a webhook. Note - using when you create an `on` handler the event will be created for you if you dont pass a webhookId
 
 ```typescript
-const webhook = await connector.createWebhook(
+const webhookId = await connector.createWebhook(
   BOARD_ID,
   'https://example.com/monday-webhook',
   'create_item',
+)
+```
+
+##### createEventWebhook
+
+Create a webhook for an event. This action requires that the connector be
+configured with a `baseURL`.
+
+```typescript
+const webhookId = await connector.createEventWebhook(
+  BOARD_ID,
+  'ChangeColumnValue'
 )
 ```
 
