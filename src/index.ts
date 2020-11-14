@@ -6,7 +6,8 @@ const WEBHOOK_PATH = '/reshuffle-monday-connector/webhook'
 
 export interface MondayConnectorConfigOptions {
   token: string
-  baseURL: string
+  baseURL?: string
+  webhookPath?: string
 }
 
 const MONDAY_ID_REGEX = /^\d{9,10}$/
@@ -179,15 +180,18 @@ export default class MondayConnector extends BaseHttpConnector<
   MondayConnectorEventOptions
 > {
   _sdk: MondaySdk
-  private webhookURL: string
-  private webhookId?: string
+  private webhookURL?: string
   private webhookLastChangedAt?: number
 
   constructor(app: Reshuffle, options: MondayConnectorConfigOptions, id?: string) {
     super(app, options, id)
-    this.webhookURL = validateBaseURL(options.baseURL) + WEBHOOK_PATH
+    const base = validateBaseURL(options.baseURL)
+    const path = validatePath(options.webhookPath) || WEBHOOK_PATH
     this._sdk = mondaySdk({ token: options.token })
-    this.app.registerHTTPDelegate(WEBHOOK_PATH, this)
+    if (base) {
+      this.webhookURL = base + path
+      this.app.registerHTTPDelegate(path, this)
+    }
   }
 
   on(
@@ -216,17 +220,6 @@ export default class MondayConnector extends BaseHttpConnector<
     )
     this.eventConfigurations[event.id] = event
     this.app.when(event, handler as any)
-
-    if (!this.webhookId) {
-      this.createWebhook(
-        event.options.boardId,
-        this.webhookURL,
-        JS_TO_MONDAY_EVENT_NAMES[options.type],
-        options.columnId,
-      ).then((id) => {
-        this.webhookId = id
-      })
-    }
 
     return event
   }
@@ -458,6 +451,17 @@ export default class MondayConnector extends BaseHttpConnector<
     return res.create_webhook.id
   }
 
+  async createEventWebhook(
+    boardId: number | string,
+    event: MondayConnectorEventOptions['type'],
+    columnId?: string,
+  ): Promise<string> {
+    if (!this.webhookURL) {
+      throw new Error('Base URL not configured')
+    }
+    return this.createWebhook(boardId, this.webhookURL, JS_TO_MONDAY_EVENT_NAMES[event], columnId)
+  }
+
   deleteWebhook(id: number): Promise<MondayApiReponse['data']> {
     return this.query(DELETE_WEBHOOK_QUERY, { id })
   }
@@ -467,7 +471,10 @@ export default class MondayConnector extends BaseHttpConnector<
   }
 }
 
-function validateBaseURL(url?: string): string {
+function validateBaseURL(url?: string): string | undefined {
+  if (typeof url === 'undefined') {
+    return
+  }
   if (typeof url !== 'string') {
     throw new Error(`Invalid url: ${url}`)
   }
@@ -476,6 +483,20 @@ function validateBaseURL(url?: string): string {
     throw new Error(`Invalid url: ${url}`)
   }
   return match[1]
+}
+
+function validatePath(path?: string): string | undefined {
+  if (typeof path === 'undefined') {
+    return
+  }
+  if (typeof path !== 'string') {
+    throw new Error(`Invalid path: ${path}`)
+  }
+  const match = path.match(/^\/?([\w\.-]+(\/[\w\.-]+)*)\/?$/)
+  if (!match) {
+    throw new Error(`Invalid path: ${path}`)
+  }
+  return '/' + match[1]
 }
 
 export { MondayConnector }
