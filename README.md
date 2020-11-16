@@ -1,10 +1,51 @@
 # reshuffle-monday-connector
 
+[Code](https://github.com/reshufflehq/reshuffle-monday-connector) |
+[npm](https://www.npmjs.com/package/reshuffle-monday-connector) |
+[Code sample](https://github.com/reshufflehq/reshuffle-monday-connector/examples)
+
+`npm install reshuffle-monday-connector`
+
 ### Reshuffle Monday Connector
 
-This connector provides a connector for [Monday](https://monday.com).
+This package contains a [Reshuffle](https://github.com/reshufflehq/reshuffle)
+connector for connecting to [Monday](https://monday.com).
 
-To get a token ([From here](https://monday.com/developers/v2#authentication-section)):
+A full documentation of Monday's API is available [here](https://monday.com/developers/v2).
+
+### Table of Contents
+
+[Configuration Options](#configuration)
+
+#### Connector Events
+
+[Listening to Monday events](#listen)
+
+#### Connector Actions
+[Get Board](#getBoard) - Retrieve a board details object from Monday
+
+[Get Board by name](#getBoardIdByName) - Lookup a board id from its name.
+
+[Get Board Items](#getBoardItems) - Retrieve all items for a specific board.
+
+[Get Group](#getGroup) - Retrieve a group details object from Monday
+
+[Get Item](#getItem) - Retrieve an item details object from Monday
+
+[Create Item](#createItem) - Create a new item in a board
+
+[Update Item](#updateItem) - Update an item's name in a board
+
+[Update Column Values](#updateColumnValues) - Update an item's column values
+
+[Query](#query) - Run a GraphQL query
+
+[SDK](#sdk) - Retrieve a full Monday sdk object
+
+
+### <a name="configuration"></a>Configuration Options
+
+To work with this connector, you'll need to get a token [from here](https://monday.com/developers/v2#authentication-section) :
 
 1. Log into your monday.com account.
 2. Click on your avatar (picture icon) in the bottom left corner.
@@ -12,8 +53,6 @@ To get a token ([From here](https://monday.com/developers/v2#authentication-sect
 4. Go to the API section.
 5. Generate a “API v2 Token”
 6. Copy your token.
-
-#### Configuration Options:
 
 ```typescript
 interface MondayConnectorConfigOptions {
@@ -23,9 +62,9 @@ interface MondayConnectorConfigOptions {
 }
 ```
 
-#### Connector events
+### Connector events
 
-##### listening to Monday events
+#### <a name="listen"></a> Listening to Monday events
 
 To listen to events happening in Monday, create an event handler with the
 boardId, event type optional column id:
@@ -51,61 +90,65 @@ call `createEventWebhook`.
 
 #### Connector actions
 
-##### getBoard
+#### <a name="getBoard"></a> getBoard
 
-Query a board or a list of boards
+Obtain details of a Monday board (or a list of boards). Use the Monday Board id as the parameter.
+_Note: To obtain the board_id, visit your board in the browser and copy the id from the last part of the URL
+e.g. if your board's url is https://my-company.monday.com/boards/123456789 - then your board id is 123456789
 
 ```typescript
-// To get the board_id, visit your board in the browser and copy the id from the last part of the URL e.g. 123456789 from https://my-company.monday.com/boards/123456789
-const board = await connector.getBoard(BOARD_ID)
+const boardId = '123456789'
+const board = await connector.getBoard(boardId)
 ```
 
-##### getBoardIdByName
+#### <a name="getBoardIdByName"></a> getBoardIdByName
 
-Find a board ID by its name
+Find a board Id by its name
 
 ```typescript
 const boardId = await connector.getBoardIdByName('My board')
 ```
 
-##### getBoardItems
+#### <a name="getBoardItems"></a> getBoardItems
 
 Get all the items in a board. The returned object has a `name` field with
-the name of the board, and an `items` object, whose with item data accessible
-by item IDs. Data for each item is an object including the item's `name` and
+the name of the board, and an `items` object, with item data accessible
+by item Ids. Data for each item is an object including the item's `name` and
 values for each column.
 
 ```typescript
 const boardItems = await connector.getBoardItems(boardId)
 ```
 
-##### getColumn
+#### <a name="getColumn"></a> getColumn
 
-Query a column or a list of columns
+Query a column or a list of columns of a board by the board's Id
 
 ```typescript
-const column = await connector.getColumn(BOARD_ID)
+const column = await connector.getColumn(boardId)
 ```
 
-##### getGroup
+##### <a name="getGroup"></a> getGroup
 
 Query a group or a list of groups
+_Monday uses groups to group items together inside a board._
+
 
 ```typescript
-const group = await connector.getGroup(GROUP_ID)
+const group = await connector.getGroup(groupId)
 ```
 
-##### getItem
+#### <a name="getItem"></a> getItem
 
 Query an item or a list of items
 
 ```typescript
-const item = await connector.getItem(ITEM_ID)
+const item = await connector.getItem(itemId)
 ```
 
-##### createItem
+#### <a name="createItem"></a> createItem
 
-Creates a new item to the board.
+Creates a new item and adds it to the specified board.
 
 | Parameter     | Type   | Required |
 | ------------- | ------ | -------- |
@@ -118,29 +161,29 @@ Example of column_values
 
 ```typescript
 const column_values = JSON.stringify({
-  [COLUMN_ID]: 'example data',
-  [COLUMN_ID2]: 'another example',
+  [column_id]: 'example data',
+  [column_id2]: 'another example',
 })
 ```
 
 ```typescript
-const item = await connector.createItem(BOARD_ID, item_name, column_values, group_id)
+const item = await connector.createItem(boardId, item_name, column_values, groupId)
 ```
 
-##### updateItem
+#### <a name="updateItem"></a> updateItem
 
-Update an item
+Update an item's name
 
 ```typescript
-const item = await connector.updateItem(ITEM_ID, 'my updated item')
+const item = await connector.updateItem(boardId, groupId, 'Updated Item Name')
 ```
 
-##### updateColumnValues
+#### <a name="updateColumnValues"></a> updateColumnValues
 
 Update an specific item in a specific board with new values. The `updaters`
 object should include one update function for each column that needs to be
 updated, with property names being the titles for these columns. Each
-functions receive the old value and should return the new value for that
+function receives the old value and should return the new value for that
 column.
 
 ```typescript
@@ -150,7 +193,7 @@ await updateColumnValues(myBoardId, myItemId, {
 })
 ```
 
-##### createWebhook
+#### createWebhook
 
 Create a webhook. Note - using when you create an `on` handler the event will be created for you if you dont pass a webhookId
 
@@ -182,7 +225,7 @@ Delete a webhook
 const deletedWebhook = await connector.deleteWebhook(WEBHOOK_ID)
 ```
 
-##### query
+#### <a name="query"></a> query
 
 Run any GraphQL query
 
@@ -190,9 +233,9 @@ Run any GraphQL query
 const res = await connector.query('query { users { name } }')
 ```
 
-##### sdk
+#### <a name="sdk"></a> sdk
 
-Full access to the Monday GraphQL API
+Returns an object providing full access to the Monday GraphQL API
 
 ```typescript
 const sdk = await connector.sdk()
