@@ -180,17 +180,23 @@ export default class MondayConnector extends BaseHttpConnector<
   MondayConnectorEventOptions
 > {
   _sdk: MondaySdk
+  private webhookPath: string
   private webhookURL?: string
   private webhookLastChangedAt?: number
 
   constructor(app: Reshuffle, options: MondayConnectorConfigOptions, id?: string) {
     super(app, options, id)
     const base = validateBaseURL(options.baseURL)
-    const path = validatePath(options.webhookPath) || WEBHOOK_PATH
-    this._sdk = mondaySdk({ token: options.token })
+    this.webhookPath = validatePath(options.webhookPath) || WEBHOOK_PATH
     if (base) {
-      this.webhookURL = base + path
-      this.app.registerHTTPDelegate(path, this)
+      this.webhookURL = base + this.webhookPath
+    }
+    this._sdk = mondaySdk({ token: options.token })
+  }
+
+  async onStart(): Promise<void> {
+    if (0 < Object.keys(this.eventConfigurations).length) {
+      this.app.registerHTTPDelegate(this.webhookPath, this)
     }
   }
 
