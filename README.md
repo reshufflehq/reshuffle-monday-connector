@@ -61,6 +61,17 @@ interface MondayConnectorConfigOptions {
   webhookPath?: string
 }
 ```
+The token is the only configuration value required if you just want to send data to Monday. If, however, you need to listen to events happening on your boards (e.g. creation or update of a task) - you'll need to provide the `baseURL` and optionally the `webhookPath` values as well.
+
+**baseURL** is the URL where the running Reshuffle instance can be found (e.g. https://my-reshuffle.com)
+
+**webhookPath** is an optional path to append to `baseURL` to create a full webhook path. 
+
+For example - providing the above `baseURL` and `webhookPath='/mondayhook` will result in a complete webhook path of `https://my-reshuffle.com/mondayhook`.
+
+If you do not provide a `webhookPath`, Reshuffle will use the default webhook path for the connector which is `/webhooks/monday`.
+
+You will need to register this webhook with Monday. See [instructions](https://support.monday.com/hc/en-us/articles/360003540679-Webhook-Integration). 
 
 ### Connector events
 
