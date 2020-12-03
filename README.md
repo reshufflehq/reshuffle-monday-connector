@@ -15,6 +15,8 @@ A full documentation of Monday's API is available [here](https://monday.com/deve
 
 ### Table of Contents
 
+[Create Monday API token](#apitoken)
+
 [Configuration Options](#configuration)
 
 #### Connector Events
@@ -42,9 +44,7 @@ A full documentation of Monday's API is available [here](https://monday.com/deve
 
 [SDK](#sdk) - Retrieve a full Monday sdk object
 
-
-### <a name="configuration"></a>Configuration Options
-
+#### <a name="apitoken"></a>Create Monday API token
 To work with this connector, you'll need to get a token [from here](https://monday.com/developers/v2#authentication-section) :
 
 1. Log into your monday.com account.
@@ -54,11 +54,22 @@ To work with this connector, you'll need to get a token [from here](https://mond
 5. Generate a “API v2 Token”
 6. Copy your token.
 
+### <a name="configuration"></a>Configuration Options
+
+Provide options as below for connecting to Monday:
+```typescript
+const connector = new MondayConnector(app, {
+  token: '<your_api_token>'
+})
+``` 
+
+To use Monday connector events, you need to provide at least your runtime baseURL. 
+You can also override the default webhookPath.
 ```typescript
 interface MondayConnectorConfigOptions {
   token: string
-  baseURL?: string
-  webhookPath?: string
+  baseURL?: string // Your Reshuffle runtime base URL
+  webhookPath?: string // Default to '/reshuffle-monday-connector/webhook'
 }
 ```
 
