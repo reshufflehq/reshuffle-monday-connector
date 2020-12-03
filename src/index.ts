@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { Reshuffle, BaseHttpConnector, EventConfiguration } from 'reshuffle-base-connector'
 import mondaySdk from 'monday-sdk-js'
 
-const WEBHOOK_PATH = '/reshuffle-monday-connector/webhook'
+const WEBHOOK_PATH = '/webhooks/monday'
 
 export interface MondayConnectorConfigOptions {
   token: string
