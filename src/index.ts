@@ -67,7 +67,7 @@ interface MondayEvent {
   triggerUuid: string
 }
 
-interface MondayApiReponse {
+interface MondayApiResponse {
   data?: Record<string, any>
   errors?: Record<string, any>[]
   error_message?: string
@@ -78,7 +78,7 @@ interface MondaySdk extends ReturnType<typeof mondaySdk> {
   api(
     query: string,
     options?: { token?: string; variables?: Record<string, unknown> },
-  ): Promise<MondayApiReponse>
+  ): Promise<MondayApiResponse>
 }
 
 const GET_BOARD_QUERY = `#graphql
@@ -160,7 +160,7 @@ mutation($id: Int!) {
 }`
 
 export class MondayError extends Error {
-  constructor(public res: MondayApiReponse) {
+  constructor(public res: MondayApiResponse) {
     super(
       `Monday API Error${
         res.errors
@@ -281,7 +281,7 @@ export default class MondayConnector extends BaseHttpConnector<
     }
   }
 
-  async query(qs: string, variables?: Record<string, any>): Promise<MondayApiReponse['data']> {
+  async query(qs: string, variables?: Record<string, any>): Promise<MondayApiResponse['data']> {
     const res = await this._sdk.api(qs, variables ? { variables } : undefined)
     if ('data' in res) {
       return res.data
@@ -302,7 +302,7 @@ export default class MondayConnector extends BaseHttpConnector<
     return obj
   }
 
-  getBoard(boardIds: number | number[]): Promise<MondayApiReponse['data']> {
+  getBoard(boardIds: number | number[]): Promise<MondayApiResponse['data']> {
     return this.query(GET_BOARD_QUERY, { board_ids: boardIds })
   }
 
@@ -344,21 +344,21 @@ export default class MondayConnector extends BaseHttpConnector<
     return { name: board.name, items }
   }
 
-  getColumn(boardIds: number | number[]): Promise<MondayApiReponse['data']> {
+  getColumn(boardIds: number | number[]): Promise<MondayApiResponse['data']> {
     return this.query(GET_COLUMNS_QUERY, { board_ids: boardIds })
   }
 
   getGroup(
     boardIds: number | number[],
     groupIds: string | string[],
-  ): Promise<MondayApiReponse['data']> {
+  ): Promise<MondayApiResponse['data']> {
     return this.query(GET_GROUPS_QUERY, {
       board_ids: boardIds,
       group_ids: groupIds,
     })
   }
 
-  getItem(itemIds: number | number[]): Promise<MondayApiReponse['data']> {
+  getItem(itemIds: number | number[]): Promise<MondayApiResponse['data']> {
     return this.query(GET_ITEMS_QUERY, { item_ids: itemIds })
   }
 
@@ -384,7 +384,7 @@ export default class MondayConnector extends BaseHttpConnector<
     boardId: number,
     groupId: string,
     itemName: string,
-  ): Promise<MondayApiReponse['data']> {
+  ): Promise<MondayApiResponse['data']> {
     return this.query(UPDATE_ITEM_QUERY, {
       board_id: boardId,
       group_id: groupId,
@@ -468,7 +468,7 @@ export default class MondayConnector extends BaseHttpConnector<
     return this.createWebhook(boardId, this.webhookURL, JS_TO_MONDAY_EVENT_NAMES[event], columnId)
   }
 
-  deleteWebhook(id: number): Promise<MondayApiReponse['data']> {
+  deleteWebhook(id: number): Promise<MondayApiResponse['data']> {
     return this.query(DELETE_WEBHOOK_QUERY, { id })
   }
 
