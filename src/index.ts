@@ -28,7 +28,7 @@ const JS_TO_MONDAY_EVENT_NAMES = {
   IncomingNotification: 'incoming_notification',
   ChangeColumnValue: 'change_column_value',
   ChangeSpecificColumnValue: 'change_specific_column_value',
-  CreateItem: 'create_item',
+  CreateItem: 'create_pulse',
   CreateUpdate: 'create_update',
 }
 
@@ -41,7 +41,7 @@ const MONDAY_TO_JS_EVENT_NAMES = {
   update_column_value: 'ChangeColumnValue',
   change_specific_column_value: 'ChangeSpecificColumnValue',
   update_specific_column_value: 'ChangeSpecificColumnValue',
-  create_item: 'CreateItem',
+  create_pulse: 'CreateItem',
   create_update: 'CreateUpdate',
 }
 
@@ -162,7 +162,7 @@ mutation($id: Int!) {
 export class MondayError extends Error {
   constructor(public res: MondayApiResponse) {
     super(
-      `Monday API Error${
+      `Monday API Error ${
         res.errors
           ? res.errors.length === 1
             ? res.errors[0].message
@@ -192,6 +192,7 @@ export default class MondayConnector extends BaseHttpConnector<
       this.webhookURL = base + this.webhookPath
     }
     this._sdk = mondaySdk({ token: options.token })
+
   }
 
   async onStart(): Promise<void> {
@@ -240,7 +241,7 @@ export default class MondayConnector extends BaseHttpConnector<
       res.json({ challenge: req.body.challenge })
     } else if (this.started) {
       const ev = req.body.event
-      if (this.webhookLastChangedAt !== ev.changedAt) {
+      if (!ev.changedAt || (this.webhookLastChangedAt !== ev.changedAt)) {
         await this.handleWebhookEvent(ev)
         this.webhookLastChangedAt = ev.changedAt
       }
