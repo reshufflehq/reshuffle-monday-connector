@@ -425,7 +425,8 @@ export default class MondayConnector extends BaseHttpConnector<
         throw new Error(`Missing or invalid updater for: ${title}`)
       }
       const value = JSON.parse(cv.value)
-      newValues[cv.id] = String(updater(value))
+      const newValue = updater(value)
+      newValues[cv.id] = typeof newValue !== 'object' ? String(newValue) : newValue
     }
 
     await this.query(`
