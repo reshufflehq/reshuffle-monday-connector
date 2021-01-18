@@ -2,13 +2,13 @@
 
 [Code](https://github.com/reshufflehq/reshuffle-monday-connector) |
 [npm](https://www.npmjs.com/package/reshuffle-monday-connector) |
-[Code sample](https://github.com/reshufflehq/reshuffle-monday-connector/examples)
+[Code sample](https://github.com/reshufflehq/reshuffle/tree/master/examples/monday)
 
 `npm install reshuffle-monday-connector`
 
 ### Reshuffle Monday Connector
 
-This package contains a [Reshuffle](https://github.com/reshufflehq/reshuffle)
+This package contains a [Reshuffle](https://reshuffle.com)
 connector for connecting to [Monday](https://monday.com).
 
 A full documentation of Monday's API is available [here](https://monday.com/developers/v2).
