@@ -8,7 +8,7 @@
 
 ### Reshuffle Monday Connector
 
-This package contains a [Reshuffle](https://reshuffle.com)
+This package contains a [Reshuffle](https://github.com/reshufflehq/reshuffle)
 connector for connecting to [Monday](https://monday.com).
 
 A full documentation of Monday's API is available [here](https://monday.com/developers/v2).
