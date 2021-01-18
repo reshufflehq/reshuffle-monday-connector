@@ -192,7 +192,6 @@ export default class MondayConnector extends BaseHttpConnector<
       this.webhookURL = base + this.webhookPath
     }
     this._sdk = mondaySdk({ token: options.token })
-
   }
 
   async onStart(): Promise<void> {
@@ -241,7 +240,7 @@ export default class MondayConnector extends BaseHttpConnector<
       res.json({ challenge: req.body.challenge })
     } else if (this.started) {
       const ev = req.body.event
-      if (!ev.changedAt || (this.webhookLastChangedAt !== ev.changedAt)) {
+      if (!ev.changedAt || this.webhookLastChangedAt !== ev.changedAt) {
         await this.handleWebhookEvent(ev)
         this.webhookLastChangedAt = ev.changedAt
       }
@@ -437,6 +436,24 @@ export default class MondayConnector extends BaseHttpConnector<
           column_values: ${JSON.stringify(JSON.stringify(newValues))}
         ) {
           id
+        }
+      }
+    `)
+  }
+
+  async updateItemName(
+    boardId: number | string,
+    itemId: number | string,
+    itemName: string,
+  ): Promise<void> {
+    await this.query(`
+      mutation {
+        change_multiple_column_values (
+          board_id: ${boardId},
+          item_id: ${itemId},
+          column_values: ${JSON.stringify(JSON.stringify({ name: itemName }))}
+        ) {
+          name
         }
       }
     `)
