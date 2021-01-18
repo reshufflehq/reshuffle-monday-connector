@@ -2,7 +2,7 @@
 
 [Code](https://github.com/reshufflehq/reshuffle-monday-connector) |
 [npm](https://www.npmjs.com/package/reshuffle-monday-connector) |
-[Code sample](https://github.com/reshufflehq/reshuffle-monday-connector/examples)
+[Code sample](https://github.com/reshufflehq/reshuffle/tree/master/examples/monday)
 
 `npm install reshuffle-monday-connector`
 
