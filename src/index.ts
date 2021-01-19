@@ -50,14 +50,14 @@ interface MondayEvent {
   originalTriggerUuid: any
   boardId: string
   groupId: string
-  itemId: string // Copid from the pulseId field to match new API terms
+  itemId: string // Copied from the pulseId field to match new API terms
   pulseId: string // pulseId
-  itemName: string // Copid from the pulseName field to match new API terms
+  itemName: string // Copied from the pulseName field to match new API terms
   pulseName: string // pulseName
   columnId: string
   columnType: string
   columnTitle: string
-  value: { value: any }
+  value: { value: any; linkedPulseIds?: Array<{ linkedPulseId: number }> }
   previousValue: { value: any }
   changedAt: number
   isTopGroup: boolean
