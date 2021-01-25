@@ -344,6 +344,20 @@ export default class MondayConnector extends BaseHttpConnector<
     return { name: board.name, items }
   }
 
+  async getBoardItemIds(boardId: string | number): Promise<Array<string>> {
+    const res = await this.query(`
+      query {
+        boards (ids: ${boardId}) {
+          items {
+            id
+          }
+        }
+      }
+    `)
+    const board = res?.boards[0]
+    return board.items ? board.items.map(({ id }) => id) : []
+  }
+
   getColumn(boardIds: number | number[]): Promise<MondayApiResponse['data']> {
     return this.query(GET_COLUMNS_QUERY, { board_ids: boardIds })
   }
