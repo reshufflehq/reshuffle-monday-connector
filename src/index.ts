@@ -127,7 +127,13 @@ query ($board_ids: [Int]!, $group_ids: [String]) {
 const GET_ITEMS_QUERY = `#graphql
 query ($item_ids: [Int]!) {
   items (ids: $item_ids) {
+    id
     name
+    column_values {
+      title
+      type
+      value
+    }
   }
 }`
 
@@ -372,8 +378,17 @@ export default class MondayConnector extends BaseHttpConnector<
     })
   }
 
-  getItem(itemIds: number | number[]): Promise<MondayApiResponse['data']> {
-    return this.query(GET_ITEMS_QUERY, { item_ids: itemIds })
+  async getItem(itemIds: number | number[]): Promise<{ items: any }> {
+    const res = await this.query(GET_ITEMS_QUERY, { item_ids: itemIds })
+    if (!res) {
+      return { items: [] }
+    }
+    return {
+      items: res.items.map((item) => ({
+        ...item,
+        ...this.columnValuesToObject(item.column_values),
+      })),
+    }
   }
 
   async createItem(
