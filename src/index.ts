@@ -250,6 +250,8 @@ export default class MondayConnector extends BaseHttpConnector<
         await this.handleWebhookEvent(ev)
         this.webhookLastChangedAt = ev.changedAt
       }
+
+      res.send()
     }
 
     return true
