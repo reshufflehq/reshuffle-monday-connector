@@ -57,7 +57,11 @@ interface MondayEvent {
   columnId: string
   columnType: string
   columnTitle: string
-  value: { value: any; linkedPulseIds?: Array<{ linkedPulseId: number }> }
+  value: {
+    value?: any
+    linkedPulseIds?: Array<{ linkedPulseId: number }>
+    label?: { index: number; text: string; style: any }
+  }
   previousValue: { value: any }
   changedAt: number
   isTopGroup: boolean
