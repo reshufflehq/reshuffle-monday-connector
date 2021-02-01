@@ -61,6 +61,7 @@ interface MondayEvent {
     value?: any
     linkedPulseIds?: Array<{ linkedPulseId: number }>
     label?: { index: number; text: string; style: any }
+    chosenValues: Array<{ id: number; name: string }>
   }
   previousValue: { value: any }
   changedAt: number
