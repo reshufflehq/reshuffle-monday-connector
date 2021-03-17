@@ -17,7 +17,7 @@ export interface MondayConnectorEventOptions {
   type:
     | 'IncomingNotification'
     | 'ChangeColumnValue'
-    | 'ChangeName'
+    | 'UpdateName'
     | 'ChangeSpecificColumnValue'
     | 'CreateItem'
     | 'CreateUpdate'
@@ -31,7 +31,7 @@ const JS_TO_MONDAY_EVENT_NAMES = {
   ChangeSpecificColumnValue: 'change_specific_column_value',
   CreateItem: 'create_pulse',
   CreateUpdate: 'create_update',
-  ChangeName: 'change_name',
+  UpdateName: 'update_name',
 }
 
 // Translate Monday event names into JavaScript friendly names. Some
@@ -41,6 +41,7 @@ const MONDAY_TO_JS_EVENT_NAMES = {
   incoming_notification: 'IncomingNotification',
   change_column_value: 'ChangeColumnValue',
   update_column_value: 'ChangeColumnValue',
+  update_name: 'UpdateName',
   change_specific_column_value: 'ChangeSpecificColumnValue',
   update_specific_column_value: 'ChangeSpecificColumnValue',
   create_pulse: 'CreateItem',
@@ -60,12 +61,13 @@ interface MondayEvent {
   columnType: string
   columnTitle: string
   value: {
+    name?: string
     value?: any
     linkedPulseIds?: Array<{ linkedPulseId: number }>
     label?: { index: number; text: string; style: any }
     chosenValues: Array<{ id: number; name: string }>
   }
-  previousValue: { value: any }
+  previousValue: { name?: string; value: any }
   changedAt: number
   isTopGroup: boolean
   type: string
