@@ -17,6 +17,7 @@ export interface MondayConnectorEventOptions {
   type:
     | 'IncomingNotification'
     | 'ChangeColumnValue'
+    | 'ChangeName'
     | 'ChangeSpecificColumnValue'
     | 'CreateItem'
     | 'CreateUpdate'
@@ -30,6 +31,7 @@ const JS_TO_MONDAY_EVENT_NAMES = {
   ChangeSpecificColumnValue: 'change_specific_column_value',
   CreateItem: 'create_pulse',
   CreateUpdate: 'create_update',
+  ChangeName: 'change_name',
 }
 
 // Translate Monday event names into JavaScript friendly names. Some
@@ -213,7 +215,7 @@ export default class MondayConnector extends BaseHttpConnector<
 
   on(
     options: MondayConnectorEventOptions,
-    handler: (event: MondayEvent) => void,
+    handler: (event: MondayEvent, app: Reshuffle) => void,
     eventId?: string,
   ): EventConfiguration {
     const boardId = String(options.boardId)

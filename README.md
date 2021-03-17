@@ -89,6 +89,7 @@ interface MondayConnectorEventOptions {
     | 'ChangeSpecificColumnValue'
     | 'CreateItem'
     | 'CreateUpdate'
+    | 'ChangeName' 
   columnId?: string // for type === ChangeSpecificColumnValue
 }
 ```
