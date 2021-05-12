@@ -1,6 +1,6 @@
 {
   "name": "reshuffle-monday-connector",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "A Reshuffle Monday connector",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
